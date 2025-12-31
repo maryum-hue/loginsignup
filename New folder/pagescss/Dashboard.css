@@ -1,0 +1,44 @@
+.dashboard-container {
+  padding: 20px;
+}
+
+.welcome-section {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-section h1 {
+  color: #333;
+  margin-bottom: 10px;
+  font-size: 32px;
+}
+
+.welcome-section p {
+  color: #666;
+  font-size: 16px;
+}
+
+.status {
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.status.active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status.upcoming {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status.pending {
+  background: #cce5ff;
+  color: #004085;
+}

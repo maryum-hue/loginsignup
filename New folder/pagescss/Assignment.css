@@ -1,0 +1,141 @@
+.assignment-container {
+  padding: 20px;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.btn-sm {
+  padding: 8px 15px;
+  font-size: 14px;
+}
+
+.status.submitted {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status.submitted-late {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status.not-started {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+.status.in-progress {
+  background: #cce5ff;
+  color: #004085;
+}
+
+.file-type {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.file-type.pdf {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.file-type.doc {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.file-type.zip {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: white;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.assignment-details {
+  margin-bottom: 30px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #555;
+}
+
+.detail-value {
+  color: #333;
+}
+
+.submission-form {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+}
