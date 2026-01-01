@@ -1,0 +1,177 @@
+import React, { useState, useEffect } from "react";
+import { initializeApp } from "firebase/app";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
+
+/* ================= FIREBASE CONFIG ================= */
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCcaoVIzjoQIwAJ_9m_zxBcjPcWBjuSmBk",
+  authDomain: "sign-up-login-page-af63e.firebaseapp.com",
+  projectId: "sign-up-login-page-af63e",
+  storageBucket: "sign-up-login-page-af63e.appspot.com",
+  messagingSenderId: "287209245759",
+  appId: "1:287209245759:web:ba48cba9d9586679277c8a",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* ================= COMPONENT ================= */
+
+export default function StudentPortal() {
+  const [students, setStudents] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+
+  const [form, setForm] = useState({
+    name: "",
+    rollNo: "",
+    class: "",
+    age: "",
+  });
+
+  const [search, setSearch] = useState("");
+  const [filterClass, setFilterClass] = useState("");
+
+  const studentsRef = collection(db, "students");
+
+  /* ================= FETCH ================= */
+
+  const fetchStudents = async () => {
+    const snap = await getDocs(studentsRef);
+    setStudents(
+      snap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }))
+    );
+  };
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  /* ================= ADD ================= */
+
+  const addStudent = async () => {
+    if (!form.name || !form.rollNo) return;
+
+    await addDoc(studentsRef, {
+      ...form,
+      createdAt: new Date(),
+    });
+
+    resetForm();
+    fetchStudents();
+  };
+
+  /* ================= EDIT ================= */
+
+  const editStudent = (student) => {
+    setEditingId(student.id);
+    setForm({
+      name: student.name,
+      rollNo: student.rollNo,
+      class: student.class,
+      age: student.age,
+    });
+  };
+
+  /* ================= UPDATE ================= */
+
+  const updateStudent = async () => {
+    const ref = doc(db, "students", editingId);
+    await updateDoc(ref, form);
+
+    resetForm();
+    fetchStudents();
+  };
+
+  /* ================= DELETE ================= */
+
+  const deleteStudent = async (id) => {
+    await deleteDoc(doc(db, "students", id));
+    fetchStudents();
+  };
+
+  /* ================= HELPERS ================= */
+
+  const resetForm = () => {
+    setEditingId(null);
+    setForm({ name: "", rollNo: "", class: "", age: "" });
+  };
+
+  const filteredStudents = students
+    .filter(s =>
+      s.name.toLowerCase().includes(search.toLowerCase()) ||
+      s.rollNo.includes(search)
+    )
+    .filter(s =>
+      filterClass ? s.class === filterClass : true
+    );
+
+  /* ================= JSX ================= */
+
+  return (
+    <div>
+      <h2>Student Portal</h2>
+
+      <input placeholder="Name"
+        value={form.name}
+        onChange={e => setForm({ ...form, name: e.target.value })}
+      />
+
+      <input placeholder="Roll No"
+        value={form.rollNo}
+        onChange={e => setForm({ ...form, rollNo: e.target.value })}
+      />
+
+      <input placeholder="Class"
+        value={form.class}
+        onChange={e => setForm({ ...form, class: e.target.value })}
+      />
+
+      <input placeholder="Age"
+        value={form.age}
+        onChange={e => setForm({ ...form, age: e.target.value })}
+      />
+
+      {editingId ? (
+        <button onClick={updateStudent}>Update</button>
+      ) : (
+        <button onClick={addStudent}>Add</button>
+      )}
+
+      <hr />
+
+      <input
+        placeholder="Search name or roll"
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+      />
+
+      <input
+        placeholder="Filter class"
+        value={filterClass}
+        onChange={e => setFilterClass(e.target.value)}
+      />
+
+      <ul>
+        {filteredStudents.map(s => (
+          <li key={s.id}>
+            {s.name} | Roll: {s.rollNo} | Class: {s.class} | Age: {s.age}
+            <button onClick={() => editStudent(s)}>Edit</button>
+            <button onClick={() => deleteStudent(s.id)}>Delete</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
