@@ -1,0 +1,46 @@
+import { useState, useEffect } from "react";
+
+export default function ProductSearch() {
+  const [search, setSearch] = useState("");
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    if (!search) {
+      setItems([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      const res = await fetch("https://dummyjson.com/products");
+      const data = await res.json();
+      
+      const filtered = data.products.filter(p =>
+        p.title.toLowerCase().includes(search.toLowerCase())
+      );
+      
+      setItems(filtered);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  return (
+    <div>
+      <input
+        placeholder="Type product name eg. Red Lipstick"
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+      />
+      
+      <div>
+        {items.map(p => (
+          <div key={p.id}>
+            <div><strong>{p.title}</strong> - ${p.price}</div>
+            <div>{p.description}</div>
+            <br />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
