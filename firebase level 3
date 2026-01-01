@@ -1,0 +1,307 @@
+import React, { useEffect, useState } from "react";
+import { initializeApp } from "firebase/app";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
+
+/* ================= FIREBASE ================= */
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCcaoVIzjoQIwAJ_9m_zxBcjPcWBjuSmBk",
+  authDomain: "sign-up-login-page-af63e.firebaseapp.com",
+  projectId: "sign-up-login-page-af63e",
+  storageBucket: "sign-up-login-page-af63e.appspot.com",
+  messagingSenderId: "287209245759",
+  appId: "1:287209245759:web:ba48cba9d9586679277c8a",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* ================= COMPONENT ================= */
+
+export default function StudentPortal() {
+  const [students, setStudents] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [search, setSearch] = useState("");
+  const [filterClass, setFilterClass] = useState("");
+
+  const [form, setForm] = useState({
+    name: "",
+    class: "",
+    age: "",
+    math: "",
+    english: "",
+    science: "",
+  });
+
+  const studentsRef = collection(db, "students");
+  const logsRef = collection(db, "logs");
+
+  /* ================= HELPERS ================= */
+
+  const generateRollNo = () =>
+    "STD-" + Date.now().toString().slice(-5);
+
+  const calculatePercentage = (s) => {
+    const total =
+      Number(s.math) + Number(s.english) + Number(s.science);
+    return Math.round((total / 300) * 100);
+  };
+
+  const calculateGrade = (p) => {
+    if (p >= 80) return "A";
+    if (p >= 60) return "B";
+    if (p >= 40) return "C";
+    return "Fail";
+  };
+
+  const logAction = async (action, studentId) => {
+    await addDoc(logsRef, {
+      action,
+      studentId,
+      time: new Date(),
+    });
+  };
+
+  const resetForm = () => {
+    setEditingId(null);
+    setForm({
+      name: "",
+      class: "",
+      age: "",
+      math: "",
+      english: "",
+      science: "",
+    });
+  };
+
+  /* ================= FETCH ================= */
+
+  const fetchStudents = async () => {
+    const snap = await getDocs(studentsRef);
+    setStudents(
+      snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    );
+  };
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  /* ================= ADD ================= */
+
+  const addStudent = async () => {
+    if (!form.name || !form.class) return;
+
+    await addDoc(studentsRef, {
+      ...form,
+      rollNo: generateRollNo(),
+      isPresent: false,
+      isAbsent: true,
+      isActive: true,
+      createdAt: new Date(),
+    });
+
+    resetForm();
+    fetchStudents();
+  };
+
+  /* ================= EDIT ================= */
+
+  const editStudent = (s) => {
+    setEditingId(s.id);
+    setForm({
+      name: s.name,
+      class: s.class,
+      age: s.age,
+      math: s.math,
+      english: s.english,
+      science: s.science,
+    });
+  };
+
+  /* ================= UPDATE ================= */
+
+  const updateStudent = async () => {
+    await updateDoc(doc(db, "students", editingId), {
+      ...form,
+      updatedAt: new Date(),
+    });
+
+    await logAction("UPDATE", editingId);
+    resetForm();
+    fetchStudents();
+  };
+
+  /* ================= SOFT DELETE ================= */
+
+  const deactivateStudent = async (id) => {
+    await updateDoc(doc(db, "students", id), {
+      isActive: false,
+      updatedAt: new Date(),
+    });
+    await logAction("DEACTIVATE", id);
+    fetchStudents();
+  };
+
+  const restoreStudent = async (id) => {
+    await updateDoc(doc(db, "students", id), {
+      isActive: true,
+      updatedAt: new Date(),
+    });
+    await logAction("RESTORE", id);
+    fetchStudents();
+  };
+
+  /* ================= ATTENDANCE ================= */
+
+  const toggleAttendance = async (s) => {
+    await updateDoc(doc(db, "students", s.id), {
+      isPresent: !s.isPresent,
+      isAbsent: s.isPresent,
+      lastAttendanceChange: new Date(),
+    });
+    fetchStudents();
+  };
+
+  const markAll = async (status) => {
+    for (let s of students) {
+      await updateDoc(doc(db, "students", s.id), {
+        isPresent: status,
+        isAbsent: !status,
+      });
+    }
+    fetchStudents();
+  };
+
+  /* ================= DERIVED DATA ================= */
+
+  const filteredStudents = students
+    .filter(s =>
+      s.name.toLowerCase().includes(search.toLowerCase())
+    )
+    .filter(s =>
+      filterClass ? s.class === filterClass : true
+    );
+
+  const topStudents = [...students]
+    .map(s => ({
+      ...s,
+      percentage: calculatePercentage(s),
+    }))
+    .sort((a, b) => b.percentage - a.percentage)
+    .slice(0, 3);
+
+  const summary = students.reduce(
+    (acc, s) => {
+      acc.total++;
+      s.isPresent ? acc.present++ : acc.absent++;
+      return acc;
+    },
+    { total: 0, present: 0, absent: 0 }
+  );
+
+  /* ================= JSX ================= */
+
+  return (
+    <div>
+      <h2>Student Portal (Next Level)</h2>
+
+      <input placeholder="Name"
+        value={form.name}
+        onChange={e => setForm({ ...form, name: e.target.value })}
+      />
+      <input placeholder="Class"
+        value={form.class}
+        onChange={e => setForm({ ...form, class: e.target.value })}
+      />
+      <input placeholder="Age"
+        value={form.age}
+        onChange={e => setForm({ ...form, age: e.target.value })}
+      />
+
+      <input placeholder="Math"
+        value={form.math}
+        onChange={e => setForm({ ...form, math: e.target.value })}
+      />
+      <input placeholder="English"
+        value={form.english}
+        onChange={e => setForm({ ...form, english: e.target.value })}
+      />
+      <input placeholder="Science"
+        value={form.science}
+        onChange={e => setForm({ ...form, science: e.target.value })}
+      />
+
+      {editingId ? (
+        <button onClick={updateStudent}>Update</button>
+      ) : (
+        <button onClick={addStudent}>Add</button>
+      )}
+
+      <hr />
+
+      <input
+        placeholder="Search"
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+      />
+
+      <input
+        placeholder="Filter Class"
+        value={filterClass}
+        onChange={e => setFilterClass(e.target.value)}
+      />
+
+      <button onClick={() => markAll(true)}>All Present</button>
+      <button onClick={() => markAll(false)}>All Absent</button>
+
+      <h4>Summary</h4>
+      <p>Total: {summary.total}</p>
+      <p>Present: {summary.present}</p>
+      <p>Absent: {summary.absent}</p>
+
+      <h4>Top 3 Students</h4>
+      <ul>
+        {topStudents.map(s => (
+          <li key={s.id}>
+            {s.name} - {s.percentage}% ({calculateGrade(s.percentage)})
+          </li>
+        ))}
+      </ul>
+
+      <h4>All Students</h4>
+      <ul>
+        {filteredStudents.map(s => (
+          <li key={s.id}>
+            {s.name} | {s.rollNo} | {s.class}
+            | {calculatePercentage(s)}%
+            | {s.isPresent ? "Present" : "Absent"}
+
+            <button onClick={() => toggleAttendance(s)}>
+              Toggle Attendance
+            </button>
+
+            <button onClick={() => editStudent(s)}>Edit</button>
+
+            {s.isActive ? (
+              <button onClick={() => deactivateStudent(s.id)}>
+                Deactivate
+              </button>
+            ) : (
+              <button onClick={() => restoreStudent(s.id)}>
+                Restore
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
