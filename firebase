@@ -1,0 +1,116 @@
+import React, { useState, useEffect } from "react";
+import { initializeApp } from "firebase/app";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
+
+
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyCcaoVIzjoQIwAJ_9m_zxBcjPcWBjuSmBk",
+  authDomain: "sign-up-login-page-af63e.firebaseapp.com",
+  projectId: "sign-up-login-page-af63e",
+  storageBucket: "sign-up-login-page-af63e.appspot.com",
+  messagingSenderId: "287209245759",
+  appId: "1:287209245759:web:ba48cba9d9586679277c8a",
+  measurementId: "G-KG7MLKJSGG",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+export default function Crud() {
+    const [notes, setNotes] = useState([]);
+    const [noteText, setNoteText] = useState('');
+    const [editingId, setEditingId] = useState(null);
+
+    const notesCollection = collection(db, 'notes');
+ 
+    //fechdatafromfirebase
+
+    const fecithngdatafromfirbase = async () => {
+        const snapshot = await getDocs(notesCollection);
+        const arrayofnotes = snapshot.docs.map((doc) =>({
+            id: doc.id,
+            ...doc.data()
+        }))
+        setNotes(arrayofnotes)
+    }
+
+useEffect(() => {
+    fecithngdatafromfirbase();
+}, []);
+
+
+
+//add notes new notes
+
+const addNotes = async () => {
+    if(!noteText) return;
+    await addDoc(notesCollection, {text: noteText});
+    setNoteText('')
+    fecithngdatafromfirbase();
+}
+
+//editing notes here
+
+const editnote = (note) => {
+    setEditingId(note.id);
+    setNoteText(note.text);
+};
+
+//updtae note
+
+const updateNote = async () => {
+ if (!noteText) return;
+  const noteRef = doc(db, 'notes', editingId)
+await updateDoc(noteRef, {text: noteText});
+    setEditingId(null);
+    setNoteText("");
+    fecithngdatafromfirbase();
+}
+
+//deltethenote here funct
+
+const deleteNote = async (id) => {
+    const noteRef = doc(db, 'notes', id);
+    await deleteDoc(noteRef);
+    fecithngdatafromfirbase();
+};
+
+
+
+return(
+    <div>
+<h2>Firestore Note App</h2>
+<input type="text"
+value={noteText}
+onChange={(e) => setNoteText(e.target.value)}
+ placeholder="Write a note..."  
+/>
+{
+    editingId ? (
+        <button onClick={updateNote}> update </button>
+    ) : (
+        <button onClick={addNotes}>add note</button>
+    )
+}
+<ul>
+   {notes.map((note) => (
+    <li key={note.id}>{note.text}
+    <button onClick={editnote}>edit</button>
+    <button onClick={deleteNote}>delete</button>
+    
+    </li>
+   ))}
+</ul>
+    </div>
+)
+}
+
